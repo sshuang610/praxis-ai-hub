@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(34, 197, 94, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.13), transparent 35%),
+    radial-gradient(circle at 40% 80%, rgba(245, 158, 11, 0.12), transparent 40%),
+    #05060a;
+  color: #e4e4e7;
+}
+
+.chat-md {
+  font-size: 15px;
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+}
+
+.chat-md p {
+  margin: 0.55rem 0 0.95rem;
+  color: #e4e4e7;
+}
+
+.chat-md h1,
+.chat-md h2,
+.chat-md h3,
+.chat-md h4 {
+  margin: 1rem 0 0.65rem;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: #fafafa;
+}
+
+.chat-md h1 {
+  font-size: 1.42rem;
+}
+
+.chat-md h2 {
+  font-size: 1.22rem;
+}
+
+.chat-md h3 {
+  font-size: 1.07rem;
+}
+
+.chat-md ul,
+.chat-md ol {
+  margin: 0.55rem 0 0.95rem;
+  padding-left: 1.2rem;
+}
+
+.chat-md li {
+  margin: 0.25rem 0;
+}
+
+.chat-md blockquote {
+  margin: 0.95rem 0;
+  padding: 0.4rem 0 0.4rem 0.9rem;
+  border-left: 2px solid #52525b;
+  color: #d4d4d8;
+}
+
+.chat-md hr {
+  margin: 1.05rem 0;
+  border-color: #3f3f46;
+}
+
+.chat-md table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.chat-md th,
+.chat-md td {
+  border: 1px solid #3f3f46;
+  padding: 0.42rem 0.5rem;
+  vertical-align: top;
+}
+
+.chat-md th {
+  background: rgba(39, 39, 42, 0.9);
+  color: #f4f4f5;
+  font-weight: 600;
+}
+
+.chat-md td {
+  color: #e4e4e7;
+}
+
+.chat-md pre {
+  margin: 1rem 0;
+}
+
+.chat-md code {
+  font-size: 0.86em;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 #09090b;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #09090b;
+}
