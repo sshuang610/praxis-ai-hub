@@ -1,10 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { embedText, embedTexts, chunkText } from "./embeddings";
 
+export type SourceType = "conversation" | "file" | "summary";
+
 export interface MemoryChunk {
   id: string;
   content: string;
-  source_type: "conversation" | "file" | "summary";
+  source_type: SourceType;
   chat_id: string | null;
   similarity: number;
   metadata: Record<string, unknown>;
@@ -14,7 +16,7 @@ interface StoreOptions {
   userId: string;
   chatId?: string;
   content: string;
-  sourceType?: "conversation" | "file" | "summary";
+  sourceType?: SourceType;
   metadata?: Record<string, unknown>;
 }
 
@@ -65,16 +67,13 @@ export async function retrieveMemory(
 
 export function buildMemorySystemPrompt(chunks: MemoryChunk[]): string {
   if (chunks.length === 0) return "";
+  const SOURCE_TAG: Record<SourceType, string> = {
+    file: "[file]",
+    summary: "[summary]",
+    conversation: "[conv]",
+  };
   const formatted = chunks
-    .map((c) => {
-      const tag =
-        c.source_type === "file"
-          ? "[file]"
-          : c.source_type === "summary"
-          ? "[summary]"
-          : "[conv]";
-      return `${tag} ${c.content.trim()}`;
-    })
+    .map((c) => `${SOURCE_TAG[c.source_type] ?? "[conv]"} ${c.content.trim()}`)
     .join("\n\n");
   return `--- Long-term Memory (retrieved from past sessions) ---\n${formatted}\n--- End of Memory ---\n\n`;
 }

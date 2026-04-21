@@ -1,39 +1,29 @@
 import { embed, embedMany } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { dashscopeEmbedding } from "@/lib/providers/dashscope";
 
-const EMBEDDING_MODEL = "text-embedding-v3";
-const BATCH_SIZE = 25; // DashScope limit per call
-
-const dashscope = createOpenAI({
-  apiKey: process.env.DASHSCOPE_API_KEY!,
-  baseURL: process.env.DASHSCOPE_BASE_URL!,
-});
-
-const embeddingModel = dashscope.embedding(EMBEDDING_MODEL);
+const BATCH_SIZE = 25;
 
 export async function embedText(text: string): Promise<number[]> {
-  const { embedding } = await embed({
-    model: embeddingModel,
-    value: text,
-  });
+  const { embedding } = await embed({ model: dashscopeEmbedding, value: text });
   return embedding;
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
 
-  const results: number[][] = [];
+  const batches: string[][] = [];
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
-    const batch = texts.slice(i, i + BATCH_SIZE);
-    const { embeddings } = await embedMany({
-      model: embeddingModel,
-      values: batch,
-    });
-    results.push(...embeddings);
+    batches.push(texts.slice(i, i + BATCH_SIZE));
   }
-  return results;
+
+  const results = await Promise.all(
+    batches.map((batch) => embedMany({ model: dashscopeEmbedding, values: batch }))
+  );
+  return results.flatMap((r) => r.embeddings);
 }
 
+// Small chunks (400 chars) tuned for vector embedding and cosine similarity.
+// File/context chunking in route.ts uses larger chunks (3000+ chars) for LLM context — those are intentionally separate.
 export function chunkText(
   text: string,
   chunkSize = 400,

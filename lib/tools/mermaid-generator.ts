@@ -1,13 +1,6 @@
 import { tool, generateText } from "ai";
 import { z } from "zod";
-import { createOpenAI } from "@ai-sdk/openai";
-
-const qwen = createOpenAI({
-  apiKey: process.env.DASHSCOPE_API_KEY!,
-  baseURL:
-    process.env.DASHSCOPE_BASE_URL ||
-    "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-});
+import { dashscope } from "@/lib/providers/dashscope";
 
 export const generateMermaidTool = tool({
   description:
@@ -22,7 +15,7 @@ export const generateMermaidTool = tool({
   execute: async ({ description, diagramType }) => {
     try {
       const { text } = await generateText({
-        model: qwen("qwen-max"),
+        model: dashscope("qwen-max"),
         system:
           "You are a Mermaid diagram expert. Output ONLY valid Mermaid code — no explanation, no markdown fences, no extra text.",
         prompt: `Create a ${diagramType} diagram for: ${description}`,

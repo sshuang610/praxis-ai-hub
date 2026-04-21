@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { dashscope } from "@/lib/providers/dashscope";
 
 export type RoutableModel =
   | "qwen-turbo"
@@ -15,24 +15,22 @@ export interface IntentResult {
   tier: 1 | 2;
 }
 
+const VALID_MODELS: RoutableModel[] = [
+  "qwen-turbo", "qwen-plus", "qwen-max", "qwen-coder-plus", "qwen-vl-max",
+];
+
 const CODE_PATTERN =
   /\b(function|class|def |import |#include|const |let |var |=>|===|!=|<\?php|namespace|struct |template|typedef|async |await |@decorator)\b|```[\w+]/i;
 const RESEARCH_PATTERN =
   /\b(research|explain|analyze|analyse|compare|derive|prove|theorem|algorithm|architecture|design|evaluate|survey|literature)\b/i;
-const SIMPLE_PATTERN = /^[^a-zA-Z]*[一-龥a-zA-Z\s,!?.，！？。]{1,40}[^a-zA-Z]*$/;
-
-const qwen = createOpenAI({
-  apiKey: process.env.DASHSCOPE_API_KEY!,
-  baseURL:
-    process.env.DASHSCOPE_BASE_URL ||
-    "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-});
+// Unicode flag required for \p{} property escapes — covers CJK, Hiragana, Katakana
+const SIMPLE_PATTERN =
+  /^[\P{L}]*[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}a-zA-Z\s,!?.，！？。]{1,40}[\P{L}]*$/u;
 
 export async function classifyIntent(
   text: string,
   hasImages: boolean
 ): Promise<IntentResult> {
-  // Tier 1: zero-cost rule-based classification
   if (hasImages) {
     return { model: "qwen-vl-max", reason: "Image attachment detected", confidence: "high", tier: 1 };
   }
@@ -46,10 +44,9 @@ export async function classifyIntent(
     return { model: "qwen-turbo", reason: "Short conversational message", confidence: "high", tier: 1 };
   }
 
-  // Tier 2: LLM classification for ambiguous cases (~200ms, <100 tokens)
   try {
     const { text: rawJson } = await generateText({
-      model: qwen("qwen-turbo"),
+      model: dashscope("qwen-turbo"),
       system:
         'You are a model router. Reply ONLY with JSON: {"model":"<choice>","reason":"<1 sentence>"}\n' +
         'Choices: qwen-turbo (simple/chat), qwen-plus (general), qwen-max (research/analysis), qwen-coder-plus (code/debug), qwen-vl-max (images).',
@@ -61,10 +58,7 @@ export async function classifyIntent(
     const match = rawJson.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]) as { model?: string; reason?: string };
-      const valid: RoutableModel[] = [
-        "qwen-turbo", "qwen-plus", "qwen-max", "qwen-coder-plus", "qwen-vl-max",
-      ];
-      const model = valid.includes(parsed.model as RoutableModel)
+      const model = VALID_MODELS.includes(parsed.model as RoutableModel)
         ? (parsed.model as RoutableModel)
         : "qwen-plus";
       return { model, reason: parsed.reason || "LLM classification", confidence: "low", tier: 2 };
