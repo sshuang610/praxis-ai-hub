@@ -1,7 +1,6 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { storeMemoryChunk } from "@/lib/memory/rag";
 
 type SaveConversationTurnInput = {
@@ -114,13 +113,15 @@ export async function saveConversationTurnAction(input: SaveConversationTurnInpu
     await supabase.from("messages").insert(rows);
   }
 
-  // Fire-and-forget: store assistant reply as a memory chunk for future RAG
-  if (input.assistantMessage.trim().length >= 100) {
-    const adminClient = getSupabaseAdminClient();
-    storeMemoryChunk(adminClient, {
+  // Fire-and-forget: store the full Q&A turn for future RAG retrieval.
+  // Use the user's authenticated supabase client so auth.uid() = user_id satisfies RLS.
+  const userSnippet = input.userMessage.trim().slice(0, 300);
+  const assistantSnippet = input.assistantMessage.trim().slice(0, 600);
+  if (userSnippet.length >= 10 && assistantSnippet.length >= 20) {
+    storeMemoryChunk(supabase, {
       userId: user.id,
       chatId: input.chatId,
-      content: input.assistantMessage,
+      content: `Q: ${userSnippet}\nA: ${assistantSnippet}`,
       sourceType: "conversation",
       metadata: { model: input.model },
     }).catch((err) => console.error("[RAG] background store failed:", err));

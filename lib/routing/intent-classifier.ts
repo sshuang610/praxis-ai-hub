@@ -2,11 +2,10 @@ import { generateText } from "ai";
 import { dashscope } from "@/lib/providers/dashscope";
 
 export type RoutableModel =
-  | "qwen-turbo"
-  | "qwen-plus"
+  | "qwen-flash-2025-07-28"
   | "qwen-max"
-  | "qwen-coder-plus"
-  | "qwen-vl-max";
+  | "qwen-plus-2025-07-14"
+  | "qwen3-vl-plus";
 
 export interface IntentResult {
   model: RoutableModel;
@@ -16,7 +15,7 @@ export interface IntentResult {
 }
 
 const VALID_MODELS: RoutableModel[] = [
-  "qwen-turbo", "qwen-plus", "qwen-max", "qwen-coder-plus", "qwen-vl-max",
+  "qwen-flash-2025-07-28", "qwen-max", "qwen-plus-2025-07-14", "qwen3-vl-plus",
 ];
 
 const CODE_PATTERN =
@@ -32,24 +31,24 @@ export async function classifyIntent(
   hasImages: boolean
 ): Promise<IntentResult> {
   if (hasImages) {
-    return { model: "qwen-vl-max", reason: "Image attachment detected", confidence: "high", tier: 1 };
+    return { model: "qwen3-vl-plus", reason: "Image attachment detected", confidence: "high", tier: 1 };
   }
   if (CODE_PATTERN.test(text)) {
-    return { model: "qwen-coder-plus", reason: "Code keywords detected", confidence: "high", tier: 1 };
+    return { model: "qwen-plus-2025-07-14", reason: "Code keywords detected", confidence: "high", tier: 1 };
   }
   if (RESEARCH_PATTERN.test(text)) {
     return { model: "qwen-max", reason: "Research/analysis intent detected", confidence: "high", tier: 1 };
   }
   if (SIMPLE_PATTERN.test(text.trim())) {
-    return { model: "qwen-turbo", reason: "Short conversational message", confidence: "high", tier: 1 };
+    return { model: "qwen-flash-2025-07-28", reason: "Short conversational message", confidence: "high", tier: 1 };
   }
 
   try {
     const { text: rawJson } = await generateText({
-      model: dashscope("qwen-turbo"),
+      model: dashscope("qwen-flash-2025-07-28"),
       system:
         'You are a model router. Reply ONLY with JSON: {"model":"<choice>","reason":"<1 sentence>"}\n' +
-        'Choices: qwen-turbo (simple/chat), qwen-plus (general), qwen-max (research/analysis), qwen-coder-plus (code/debug), qwen-vl-max (images).',
+        'Choices: qwen-flash-2025-07-28 (simple/chat/general), qwen-max (research/analysis), qwen-plus-2025-07-14 (code/debug), qwen3-vl-plus (images).',
       prompt: text.slice(0, 400),
       maxTokens: 80,
       temperature: 0,
@@ -60,12 +59,12 @@ export async function classifyIntent(
       const parsed = JSON.parse(match[0]) as { model?: string; reason?: string };
       const model = VALID_MODELS.includes(parsed.model as RoutableModel)
         ? (parsed.model as RoutableModel)
-        : "qwen-plus";
+        : "qwen-flash-2025-07-28";
       return { model, reason: parsed.reason || "LLM classification", confidence: "low", tier: 2 };
     }
   } catch {
     // fall through to default
   }
 
-  return { model: "qwen-plus", reason: "Default model", confidence: "low", tier: 1 };
+  return { model: "qwen-flash-2025-07-28", reason: "Default model", confidence: "low", tier: 1 };
 }

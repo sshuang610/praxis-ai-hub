@@ -24,7 +24,7 @@ export async function storeMemoryChunk(
   supabase: SupabaseClient,
   opts: StoreOptions
 ): Promise<void> {
-  if (!opts.content || opts.content.trim().length < 100) return;
+  if (!opts.content || opts.content.trim().length < 30) return;
 
   const chunks = chunkText(opts.content.trim(), 400, 50);
   const embeddings = await embedTexts(chunks);
@@ -39,7 +39,11 @@ export async function storeMemoryChunk(
   }));
 
   const { error } = await supabase.from("memory_chunks").insert(rows);
-  if (error) console.error("[RAG] store error:", error.message);
+  if (error) {
+    console.error("[RAG] store error:", error.message, "| code:", error.code);
+  } else {
+    console.log(`[RAG] stored ${rows.length} chunk(s) for user ${opts.userId.slice(0, 8)}…`);
+  }
 }
 
 export async function retrieveMemory(
@@ -52,7 +56,7 @@ export async function retrieveMemory(
       query_embedding: queryEmbedding,
       target_user_id: opts.userId,
       match_k: opts.k ?? 5,
-      match_threshold: opts.threshold ?? 0.70,
+      match_threshold: opts.threshold ?? 0.60,
     });
     if (error) {
       console.error("[RAG] retrieve error:", error.message);

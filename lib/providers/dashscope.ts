@@ -9,4 +9,6 @@ export const dashscope = createOpenAI({
   baseURL: BASE_URL,
 });
 
+// text-embedding-v3 outputs 1024 dims — schema must use vector(1024).
+// Run supabase/v3-embedding-migration.sql before deploying.
 export const dashscopeEmbedding = dashscope.embedding("text-embedding-v3");
